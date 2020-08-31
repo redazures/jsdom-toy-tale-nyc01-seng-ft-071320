@@ -1,107 +1,115 @@
 let addToy = false;
+//This is where toys can come and survive us growing up
 
-const toycollection = document.getElementById("toy-collection")
-
-const getToys = () => {
-  fetch("http://localhost:3000/toys")
-  .then(response => response.json())
-  .then(toyCollection => renderToys(toyCollection))
-}
-// creates const for the function to render the toy object
-const renderToys = toys => {
-  for (const toyObj of toys){
-    (renderToy(toyObj))
-  }
-}
-//create a function to render toy to DOM
-function renderToy(toyObj) {
-  const toyDiv = document.createElement('div')
-  toyDiv.classList.add("card")
-  toyDiv.dataset.id = toyObj.id
+document.addEventListener("DOMContentLoaded", () => {
+  const addBtn = document.querySelector("#new-toy-btn");
+  const toyFormContainer = document.querySelector(".container");
+  get()
+  buttonlike()
   
-  toyDiv.innerHTML =`
-  <h2>${toyObj.name}</h2>
-  <img src="${toyObj.image}" class="toy-class" width="85%">
-  <p>${toyObj.likes} likes</p>
-  <button class="like-btn">likes</button>
-  
-  `
-  toycollection.appendChild(toyDiv)
+  addBtn.addEventListener("click", () => {
+    console.log("what")
+    // hide & seek with the form
+    addToy = !addToy;
+    if (addToy) {
+      toyFormContainer.style.display = "block";
+      submit() 
+    } else {
+      toyFormContainer.style.display = "none";
+    }
+  });
+  console.log("what is going on")
+
+});
+
+function get(){
+  fetch('http://localhost:3000/toys/')
+  .then(res=>res.json())
+  .then(string=>{string.forEach(item=>objectify(item))})
 }
 
-function submitData( name, image, likes ) {
-  fetch( 'http://localhost:3000/toys/', {
+function objectify(josh){
+  create(josh)
+}
+
+function create(object){
+// console.log(object.id)
+  const container = document.querySelector('#toy-collection');
+  const div =document.createElement('div')
+  div.innerHTML=`<h2>${object.name}</h2><img src=${object.image} class="toy-avatar" width="100px"><p>${object.likes} likes</p><button class="like-btn">Like<3</button>`
+  div.className='card'
+  div.dataset.id=object.id
+  container.appendChild(div)
+  
+  //delete
+  const del = document.createElement('button')
+  del.id="delete-btn"
+  del.innerText="Gone Girl This Toy"
+  div.appendChild(del)
+  del.addEventListener('click',(e)=>{
+    console.log(e.target.parentNode)
+    const toy = e.target.parentNode
+    const id = toy.dataset.id
+    fetch('http://localhost:3000/toys/'+id, {
+    method: "DELETE"
+    })
+      .then(resp => resp.json())
+      .then(console.log)
+    cconsole.log(toy)
+    toy.innerHTML==""
+    toy.remove()
+    })
+    
+}
+
+function submit(){
+  const form = document.querySelector('form')
+  document.addEventListener('submit', (e) => {
+    console.log("this is form")
+    e.preventDefault()
+    options={
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Accept": "application/json"
       },
-      body: JSON.stringify( {
-        name,
-        image,
-        likes
-      } )
-    } )
-}
-
-function submitLikes(id,likes ) { 
-  fetch( ('http://localhost:3000/toys/'+ id), {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: JSON.stringify( { likes: likes
-      } )
-    } )
-}
-
-const submitHandler = () => {
-  document.addEventListener('submit', e => {
-    e.preventDefault()
-    const form = e.target
-    const name = form.name.value
-    const image = form.image.value
-    const likes = 0
-
-    const toyObj = {
-      name: name,
-      image: image,
-      likes: likes
+      body: JSON.stringify({
+        name: form.name.value,
+        image: form.image.value,
+        likes: 0
+      })
     }
-
-    renderToy(toyObj)
-    submitData(name,image,likes)
+    fetch('http://localhost:3000/toys', options)
+    .then(res=>res.json())
+    .then(create)
     form.reset()
   })
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const addBtn = document.querySelector("#new-toy-btn");
-  const toyFormContainer = document.querySelector(".container");
-  getToys()
-  
-  document.addEventListener('click', function(e){
-    if (e.target.innerText === 'likes') {
-      newNum = parseInt(e.target.parentElement.querySelector('p').innerText, 10)+1
-      //can also use previousElementSilbing
-      idNum = e.target.parentElement.dataset.id
-      e.target.parentElement.querySelector('p').innerHTML = `${newNum} likes`
-      submitLikes(idNum, newNum)
-    }     
-  })
-  addBtn.addEventListener("click", () => {
-    // hide & seek with the form
-    // I am very bad with typing
-    console.log("you are at the top level")
-    addToy = !addToy;
-    if (addToy) {
-      toyFormContainer.style.display = "block";
-      addBtn.innerHTML="Cancel" 
-      submitHandler()
-    } else {
-      toyFormContainer.style.display = "none";
-      addBtn.innerHTML="Add a new toy!"
+function buttonlike(){
+  document.addEventListener('click',(e)=>{
+    if(e.target.matches('.like-btn')){
+      const dog = e.target.parentElement
+      const id = dog.dataset.id
+      let dogLikes = dog.querySelector('p')
+      let mucho = parseInt(dog.querySelector('p').innerText)+1
+      console.log(mucho)
+
+      fetch('http://localhost:3000/toys/'+id, {
+      method: "PATCH",
+      headers: {
+        "Content-type": "application/json",
+        "accept": "application/json"
+      },
+        body: JSON.stringify({
+        likes: mucho
+      })
+      })
+      .then(res => res.json())
+      .then(out=>{
+        dogLikes.innerHTML=`${out["likes"]} likes`
+        })
     }
-  });
-});
+  })
+}
+
