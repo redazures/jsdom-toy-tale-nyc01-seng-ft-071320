@@ -1,115 +1,99 @@
 let addToy = false;
-//This is where toys can come and survive us growing up
+//Toys baby
 
 document.addEventListener("DOMContentLoaded", () => {
+  console.log("lets start")
   const addBtn = document.querySelector("#new-toy-btn");
   const toyFormContainer = document.querySelector(".container");
   get()
-  buttonlike()
-  
+  form()
+  clunk()
+
   addBtn.addEventListener("click", () => {
-    console.log("what")
     // hide & seek with the form
     addToy = !addToy;
     if (addToy) {
       toyFormContainer.style.display = "block";
-      submit() 
     } else {
       toyFormContainer.style.display = "none";
     }
   });
-  console.log("what is going on")
-
 });
 
 function get(){
-  fetch('http://localhost:3000/toys/')
+  fetch('http://localhost:3000/toys')
   .then(res=>res.json())
-  .then(string=>{string.forEach(item=>objectify(item))})
+  .then(toys=>toys.forEach(render))
 }
 
-function objectify(josh){
-  create(josh)
+function render(toy){
+  const toycollection=document.querySelector('#toy-collection')
+  const div = document.createElement('div')
+  toycollection.append(div)
+  div.className="card"
+  div.dataset.id= toy.id
+  div.innerHTML=`<h2>${toy.name}</h2>
+  <img src=${toy.image} class="toy-avatar" />
+  <p>${toy.likes} Likes </p>
+  <button class="like-btn" data-id="${toy.id}">Like <3</button>
+  <button class="delete-btn" data-id="${toy.id}">Gone Girl</button>`
 }
 
-function create(object){
-// console.log(object.id)
-  const container = document.querySelector('#toy-collection');
-  const div =document.createElement('div')
-  div.innerHTML=`<h2>${object.name}</h2><img src=${object.image} class="toy-avatar" width="100px"><p>${object.likes} likes</p><button class="like-btn">Like<3</button>`
-  div.className='card'
-  div.dataset.id=object.id
-  container.appendChild(div)
-  
-  //delete
-  const del = document.createElement('button')
-  del.id="delete-btn"
-  del.innerText="Gone Girl This Toy"
-  div.appendChild(del)
-  del.addEventListener('click',(e)=>{
-    console.log(e.target.parentNode)
-    const toy = e.target.parentNode
-    const id = toy.dataset.id
-    fetch('http://localhost:3000/toys/'+id, {
-    method: "DELETE"
-    })
-      .then(resp => resp.json())
-      .then(console.log)
-    cconsole.log(toy)
-    toy.innerHTML==""
-    toy.remove()
-    })
-    
-}
-
-function submit(){
-  const form = document.querySelector('form')
-  document.addEventListener('submit', (e) => {
-    console.log("this is form")
+function form(){
+  console.log("form")
+  const form = document.querySelector('.add-toy-form')
+  const toyFormContainer = document.querySelector(".container");
+  form.addEventListener('submit',(e)=>{
     e.preventDefault()
-    options={
+    faker={
+      name: form.name.value,
+      image: form.image.value,
+      likes: 0
+    }
+    fetch(`http://localhost:3000/toys`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
+      "Content-type": "application/json",
+      "accept": "application/json"
       },
-      body: JSON.stringify({
-        name: form.name.value,
-        image: form.image.value,
-        likes: 0
-      })
-    }
-    fetch('http://localhost:3000/toys', options)
-    .then(res=>res.json())
-    .then(create)
-    form.reset()
-  })
-}
-
-function buttonlike(){
-  document.addEventListener('click',(e)=>{
-    if(e.target.matches('.like-btn')){
-      const dog = e.target.parentElement
-      const id = dog.dataset.id
-      let dogLikes = dog.querySelector('p')
-      let mucho = parseInt(dog.querySelector('p').innerText)+1
-      console.log(mucho)
-
-      fetch('http://localhost:3000/toys/'+id, {
-      method: "PATCH",
-      headers: {
-        "Content-type": "application/json",
-        "accept": "application/json"
-      },
-        body: JSON.stringify({
-        likes: mucho
-      })
+          body: JSON.stringify(
+            faker
+          )
       })
       .then(res => res.json())
-      .then(out=>{
-        dogLikes.innerHTML=`${out["likes"]} likes`
-        })
-    }
-  })
-}
+      .then(render)
+      form.reset()
+      toyFormContainer.style.display = "none"
+  })// This is the end of my submit
+}//This is the end of form
 
+function clunk (){
+document.addEventListener('click',(e)=>{//console.log(e.target)
+  if(e.target.matches('.like-btn')){
+    console.log('this is the like btn')
+    const likes = e.target.previousElementSibling
+    const id = parseInt(e.target.dataset.id)
+    const num = parseInt(likes.innerText)+1
+    // debugger
+    fetch(`http://localhost:3000/toys/${id}`, {
+      method: "PATCH",
+      headers: {
+      "Content-type": "application/json",
+      "accept": "application/json"
+      },
+          body: JSON.stringify({
+            likes: num
+          })
+      }).then(res=>res.json()).then(//console.log
+        toy=>{likes.innerText = `${toy.likes} likes`}
+        )
+  }//end of the first if statement (likes)
+  else if (e.target.matches('.delete-btn')){//console.log("what") //debugger
+    const id = parseInt(e.target.dataset.id)
+    fetch(`http://localhost:3000/toys/${id}`, {
+    method: "DELETE"})
+    const parent = e.target.parentElement
+    parent.remove(e.target)
+  }//end of the second if statement (delete)
+})
+}//this is the end of my clunk
